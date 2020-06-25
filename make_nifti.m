@@ -22,7 +22,7 @@ VH_data_main = 'E:\VH_data';      % Main path
 %   0.33x0.33x1 mm for the male dataset and 0.33x0.33x0.33 for the female
 %   dataset. The actual voxelsize of the NIfTI image will be rounded to the
 %   nearest multiple of 0.33 (i.e., no interpolation will be done). The 
-%   z-resolution (voxel_size(3)) for the male dataset will be rouned to the
+%   z-resolution (voxel_size(3)) for the male dataset will be rounded to the
 %   nearest integer (e.g. 0.8 becomes 1).
 % appendix: string to append to the default filename. The default filename
 %           is <dataset>_<section>_<side>.nii, e.g. male_legs_left.nii.
@@ -30,9 +30,7 @@ VH_data_main = 'E:\VH_data';      % Main path
 % compressed: If true, the NIfTI files be compressed (.nii.gz)
 % nifti_path: Folder to which NIfTI files be saved. This folder will be 
 %             created if it doesn't exist yet.
-% data_path : 
-
-dataset    = 'male';
+dataset    = 'female';
 section    = 'head';
 side       = '';
 voxel_size = [1 1 1];
