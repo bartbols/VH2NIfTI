@@ -1,6 +1,7 @@
 % This script converts the raw image files of the Visible Human to NIfTI files.
 function varargout = fullcolor2nii(dataset,voxel_size,data_path,first_file,last_file,sel_dim1,sel_dim2,nifti_filename,compressed,writemask)
 
+% Set some default options.
 if nargin < 10
     writemask = false;
     if nargin < 9
@@ -10,6 +11,7 @@ end
 % Make a list of all selected files.
 files = dir(fullfile(data_path,'*.raw'));
 
+% Get the index of the first and last file in the stack.
 C = struct2cell(files);
 F = fieldnames(files);
 filenames = C(strcmp(F,'name'),:);
@@ -21,43 +23,50 @@ last_file_idx  = find(strcmp(filenames,[last_file '.raw']));
 raw_size  = [2048,1216];
 
 %% Make list of files to include in NIfTI image
-pixel_dim1     = voxel_size(1:2);
-slice_spacing1 = voxel_size(3);
+voxel_size1     = voxel_size;
+
 switch dataset
     case 'male'
-        slice_gap = round(slice_spacing1 / 1);
+        % Get the actual slice thickness: multiples of 1.
+        slice_gap = round(voxel_size1(3) / 1);
+        if slice_gap ==0;slice_gap = 1;end
         voxel_size(3) =  slice_gap;
         
         % Get z-coordinate of the origin of the image coordinate system.
         Oz = -(first_file_idx-1)*1;
+        
+        % Set origin pixel.
         pixel_offset = [1017 581];
     case 'female'
-        slice_gap = round(slice_spacing1 / 0.33);
+        % Get the actual slice thickness: multiples of 0.33.
+        slice_gap = round(voxel_size1(3) / 0.33);
+        if slice_gap ==0;slice_gap = 1;end
         voxel_size(3) =  slice_gap * 0.33;
         
         % Get z-coordinate of the origin of the coordinate system
         Oz = -(first_file_idx-1)*0.33;
+        
+        % Set origin pixel.
         pixel_offset = [1046 544];
 end
 
-pixel_gap       = round(pixel_dim1 ./ 0.33);
+% Calculate the actual voxel size (multiples of 0.33).
+pixel_gap       = round(voxel_size1(1:2) ./ 0.33);
 voxel_size(1:2) = pixel_gap * 0.33;
 
-% Minimum area number of connected voxels to be inluced in the foreground.
-% min_area_voxels = 5000;
-
+% Print the requested and actual voxel size to the command window.
 fprintf('\n--------------------------------------------------\n')
 fprintf('Requested / actual voxel size = [%.2f,%.2f,%.2f] / [%.2f,%.2f,%.2f] mm',...
-    pixel_dim1(1),pixel_dim1(2),slice_spacing1,...
+    voxel_size1(1),voxel_size1(2),voxel_size1(3),...
     voxel_size(1),voxel_size(2),voxel_size(3));
 fprintf('\n--------------------------------------------------\n')
 files = files(first_file_idx:slice_gap:last_file_idx);
 
+% Image size after cropping.
 crop_size = [length(sel_dim1(1):pixel_gap(1):sel_dim1(end))...
-    length(sel_dim2(1):pixel_gap(2):sel_dim2(end))];
+             length(sel_dim2(1):pixel_gap(2):sel_dim2(end))];
 
-
-% Create an empty image.
+% Create an empty image with the correct dimensions.
 IMG = uint8(zeros(crop_size(1),crop_size(2),length(files),1,3));
 if writemask==true
     MASK = uint8(zeros(crop_size(1),crop_size(2),length(files)));
@@ -86,7 +95,6 @@ for slice_nr = 1 : length(files)
         1:3);
     
     % Create binary mask of the foreground (background=0)
-%     slice_mask = mask_fullcolor_background(I_cropped(:,:,1),75,min_area_voxels);
     slice_mask = load(mask_filename);
     slice_mask = slice_mask.mask(sel_dim1,sel_dim2);
     
@@ -98,7 +106,7 @@ for slice_nr = 1 : length(files)
         MASK(:,:,slice_nr) = ...
             uint8(slice_mask(1:pixel_gap(1):end,1:pixel_gap(2):end));
     end
-% 
+% %       Uncomment for diagnostic purposes only.
 %         figure;
 %         image(I_cropped) %;colormap gray
 %         hold on
@@ -145,7 +153,6 @@ if writemask == true
     % Overwrite the image size and pixel dimensions
     info.ImageSize = size(MASK);
     info.PixelDimensions = voxel_size;
-%     T = diag([info.PixelDimensions(1:3).* flipsgn 1]);
     info.Transform.T = T;
     info.raw.srow_x = T(:,1)';
     info.raw.srow_y = T(:,2)';
@@ -160,7 +167,7 @@ if writemask == true
     end
 end
 
-%% Output the filenames
+%% Output the filenames.
 if nargout > 0
     varargout{1} = nifti_filename;
     if nargout > 1
