@@ -38,6 +38,7 @@ for i = 1 : nErode
     mask = imdilate(mask,el);
 end
 
+% Fill holes
 for slice_nr = 1 : size(mask,3)
     mask(:,:,slice_nr) = imfill(mask(:,:,slice_nr),'holes');
 end

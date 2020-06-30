@@ -6,8 +6,8 @@ clear
 % in the folder VH_data_main. The code expects *unzipped* .raw files in
 % subfolders male/fullcolor/fullbody and female/fullcolor/fullbody.
 
-filename.csv = 'VH_sections.csv'; % CSV file
-VH_data_main = 'E:\VH_data';      % Main path
+filename.csv = 'VH_sections.csv'; % CSV file with section information.
+VH_data_main = 'E:\VH_data';      % Main path to Visible Human data
 
 %% ----------------- SETTINGS -----------------------
 % dataset: 'male' or 'female' Visible Human data
@@ -17,7 +17,10 @@ VH_data_main = 'E:\VH_data';      % Main path
 % voxel_size: xyz resolution of image in mm. 
 %             x=right-left
 %             y=posterior-anterior
-%             z=superior-inferior)
+%             z=superior-inferior
+%             xy-plane = axial plane
+%             yz-plane = sagittal plane
+%             xz-plane = coronal plane
 %   Note on resolution: the original Visible Human data has a voxel size of
 %   0.33x0.33x1 mm for the male dataset and 0.33x0.33x0.33 for the female
 %   dataset. The actual voxelsize of the NIfTI image will be rounded to the
@@ -25,13 +28,13 @@ VH_data_main = 'E:\VH_data';      % Main path
 %   z-resolution (voxel_size(3)) for the male dataset will be rounded to the
 %   nearest integer (e.g. 0.8 becomes 1).
 % appendix: string to append to the default filename. The default filename
-%           is <dataset>_<section>_<side>.nii, e.g. male_legs_left.nii.
+%           is <dataset>_<section>_<side>.nii, e.g. male_lowerleg_left.nii.
 % writemask:  If true, a binary mask with non-zero voxels will be created.
 % compressed: If true, the NIfTI files be compressed (.nii.gz)
 % nifti_path: Folder to which NIfTI files be saved. This folder will be 
 %             created if it doesn't exist yet.
 dataset    = 'female';
-section    = 'head';
+section    = 'fullbody';
 side       = '';
 voxel_size = [1 1 1];
 appendix   = '1x1x1'; 
@@ -45,7 +48,7 @@ nifti_path = fullfile(VH_data_main,dataset,'nifti');
 
 %% Build up the default filename.
 if exist(nifti_path,'dir')~=7;mkdir(nifti_path);end
-if any(strcmp(section,{'legs','thighs','shoulders','feet','forearm'}))
+if any(strcmp(section,{'lowerleg','upperleg','shoulder','feet','forearm'}))
     row_idx = find(strcmp(csvdata(:,1),dataset) & strcmp(csvdata(:,2),section) & strcmp(csvdata(:,3),side));
     nifti_filename = [dataset '_' section '_' side];
 else
